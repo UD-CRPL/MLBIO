@@ -35,10 +35,15 @@ def rare_allele_enrichment(dataset, balanceRatio, plot):
 
     input = input.loc[(input['ratio'] < minimum) | (input['ratio'] > maximum)]
 
-    top_15 = input.nlargest(15, "ratio")
-    bottom_15 = input.nsmallest(15, "ratio")
-    input = pd.concat([top_15, bottom_15])
+    if len(input) > 30:
+        top_15 = input.nlargest(15, "ratio")
+    #    print(top_15['ratio'])
+        bottom_15 = input.nsmallest(15, "ratio")
+    #    print(bottom_15['ratio'])
+        input = pd.concat([top_15, bottom_15])
 
+    #else:
+    #    print(input['ratio'])
 
     input = input.drop(['ratio'], axis=1)
 

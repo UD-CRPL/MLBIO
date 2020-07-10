@@ -14,12 +14,16 @@ def get_parser():
                         help='Classifier Combination: 0 - Random Forest, SVM, 1 - Random Forest, Gradient Boosting, 2 - Gradient Boosting, SVM')
     parser.add_argument('--tuning', type=int, default=1,
                             help='Hyperparemeter Tuning enabling')
+    parser.add_argument('--test_random_data', type=int, default=0)
     parser.add_argument('--test_type', type=int, default=0)
     parser.add_argument('--iterations', type=int, default=10)
     parser.add_argument('--my_functions', type=int, default=0)
+    parser.add_argument('--subtract', type=int, default=0)
+    parser.add_argument('--contingency', type=int, default=0)
     parser.add_argument('--threshold', type=float, default=0.70)
     parser.add_argument('--synthetic', action='store_true',
                     help='Generate Synthetic Dataset. default=true')
+    parser.add_argument('--robustness', type=int, default=0)
     #parser.add_argument('dataset',
     #                help='Genomic Dataset in with file extension VCF used for the Framework')
 

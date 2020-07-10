@@ -1,5 +1,49 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import sklearn
+
+def contingency_matrix_test(dataset, labels):
+    tables = []
+    for column in dataset.columns:
+
+        zero_disease = 0
+        one_disease = 0
+        two_disease = 0
+
+        zero_control = 0
+        one_control = 0
+        two_control = 0
+
+        label_index = 0
+
+        for item in dataset[column].iteritems():
+            if labels[label_index] == 1:
+                if item[1] == 0:
+                    zero_disease = zero_disease + 1
+                elif item[1] == 1:
+                    one_disease = one_disease + 1
+                elif item[1] == 2:
+                    two_disease = two_disease + 1
+                else:
+                    print("Weird value")
+            if labels[label_index] == 0:
+                if item[1] == 0:
+                    zero_control = zero_control + 1
+                elif item[1] == 1:
+                    one_control = one_control + 1
+                elif item[1] == 2:
+                    two_control = two_control + 1
+                else:
+                    print("Weird value")
+
+            label_index = label_index + 1
+        disease_cohort = [zero_disease, one_disease, two_disease]
+        control_cohort = [zero_control, one_control, one_control]
+        contigency_table = [control_cohort, disease_cohort]
+        tables.append(contigency_table)
+
+        print(len(tables))
+    return tables
 
 def majority_voting(votes):
     # Chooses the classifier that has been voted the most
@@ -112,15 +156,22 @@ def validate_model(model, x_test, y_test, threshold, my_functions):
         sensitivity = tp / (tp + fn)
         specificity = tn / (tn + fp)
 
-    return fpr, tpr, roc_score, accuracy, sensitivity, specificity
+    return fpr, tpr, roc_score, accuracy, sensitivity, specificity, prediction
 
-
-def plot_roc_curve(fpr_array, tpr_array, roc_score_array, label_array, title, fig_name):
+def plot_roc_curve(fpr_array, tpr_array, roc_score_array, label_array, title, fig_name, roc_subtract):
     colors = ['orange', 'red', 'green', 'purple', 'yellow']
+    fpr_array = np.array(fpr_array)
+    tpr_array = np.array(tpr_array)
+    roc_score_array = np.array(roc_score_array)
     # Iterates through the dataset scenarios (different number of spikes, different number of features, etc)
-    for i in range(0, len(tpr_array)):
-        # plots the corresponding FPR and TPR values found for the dataset scenario
-        plt.plot(fpr_array[i], tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(roc_score_array[i], 3)))
+    if roc_subtract:
+        for i in range(1, len(tpr_array)):
+            # plots the corresponding FPR and TPR values found for the dataset scenario, substracting spiked 0 curve to the other ones
+            plt.plot(fpr_array[i] - fpr_array[0], tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(roc_score_array[i] - roc_score_array[0], 3)))
+    else:
+        for i in range(0, len(tpr_array)):
+            # plots the corresponding FPR and TPR values found for the dataset scenario
+            plt.plot(fpr_array[i], tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(roc_score_array[i], 3)))
     # (0.5 AUC Score, Random Guess) Line
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
     # Sets graph axis labels, title, legend table
@@ -133,6 +184,30 @@ def plot_roc_curve(fpr_array, tpr_array, roc_score_array, label_array, title, fi
     plt.savefig(fig_name + '.png')
     plt.clf()
     return
+
+def plot_roc_curve_random(fpr_array, tpr_array, roc_score_array, title, fig_name):
+    colors = ['orange', 'red', 'green', 'purple', 'yellow']
+    plt.plot(fpr_array, tpr_array, color='orange', label= 'Random Dataset, auc=' + str(round(roc_score_array, 3)))
+    # (0.5 AUC Score, Random Guess) Line
+    plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
+    # Sets graph axis labels, title, legend table
+    plt.xlabel('False Positive Rate (FPR)')
+    plt.ylabel('True Positive Rate (TPR)')
+    plt.title(title)
+    plt.legend()
+    plt.show()
+    # Saves the graph as a png file
+    plt.savefig(fig_name + '.png')
+    plt.clf()
+    return
+
+def plot_matrix(tables):
+    from statsmodels.graphics.mosaicplot import mosaic
+    for table in tables:
+        table = np.array(table)
+        mosaic(data=table.T, gap=0.01, title='contingency table')
+        plt.show()
+        plt.clf()
 
 def plot_prec_recall(model, x_test, y_test, pred, fig_name):
     from sklearn.metrics import average_precision_score
