@@ -96,6 +96,8 @@ def train_model(dataset, labels, combination, tuning):
         model_2.fit(dataset, labels)
         return model_1, model_2
 
+def NeuralNetwork(dataset):
+    return
 
 def get_parameters(model):
     # Grabs the best set of parameters found for the model

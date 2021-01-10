@@ -31,7 +31,13 @@ def generate_spike_indexes(features, number_of_spikes, betaglobin, spike_array):
 
 def createDataset(sampleNumber, featureNumber, balanceRatio, numberOfSpikes, betaglobinIndex, spikedArray, spikeIndexes):
     # Creates a Pandas Dataframe with shape: (# of samples, # of features) filled with random integers between {0, 1, 2}
-    dataset = pd.DataFrame(np.random.randint(0, 3, size=(sampleNumber, featureNumber)))
+    variants = [0, 1, 2]
+    probabilitiesControl = [0.729, 0.177, 0.094]
+    #variants = [0, 1]
+    #probabilitiesControl = [0.729, 0.177 + 0.094]
+    dataset = pd.DataFrame(np.random.choice(variants, p=probabilitiesControl, size=(sampleNumber, featureNumber)))
+    #dataset = dataset.sample(n = sampleNumber)
+    #dataset = pd.DataFrame(np.random.randint(0, 3, size=(sampleNumber, featureNumber)))
     # Creates a Pandas Series size of (# of samples) filled with the value 2 (This is supposed to represent HbS)
     betaglobin = [2] * sampleNumber
     # List of "spikes" / enriched alleles
@@ -45,14 +51,19 @@ def createDataset(sampleNumber, featureNumber, balanceRatio, numberOfSpikes, bet
         # Assigned label for each sample in a list
         labels = generateLabels(sampleNumber, balanceRatio)
         dataset, spikeIndexes = insertSpike(dataset, spikedArray, betaglobin, featureNumber, betaglobinIndex, spikeIndexes)
+    #print(dataset)
     return dataset, labels, spikeIndexes, spikedArray
 
 def generateSpikes(sampleNumber, balanceRatio, numberOfSpikes):
     spikedArray = [] # Initializes empty list (List of spikes)
     variants = [0, 1, 2] # Possible variants represented as counts: ()
+    #variants = [0, 1]
     # Probabilities for each of the possible variants to occur based on the corresponding label, in order (0, 1, 2)
     probabilitiesControl = [0.70, 0.15, 0.15]
     probabilitiesDisease = [0.15, 0.15, 0.70]
+
+    #probabilitiesControl = [0.80, 0.10 + 0.10]
+    #probabilitiesDisease = [0.10 + 0.10, 0.80]
     # Repeats for the number of spikes desired
     for i in range(0, numberOfSpikes):
         spikedFeature = [] # Empty list (Spiked allele)

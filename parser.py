@@ -24,6 +24,7 @@ def get_parser():
     parser.add_argument('--synthetic', action='store_true',
                     help='Generate Synthetic Dataset. default=true')
     parser.add_argument('--robustness', type=int, default=0)
+    parser.add_argument('--final_testing', type=int, default=0)
     #parser.add_argument('dataset',
     #                help='Genomic Dataset in with file extension VCF used for the Framework')
 

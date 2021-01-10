@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from sklearn.model_selection import KFold
 import numpy as np
 import sklearn
 
@@ -121,7 +122,7 @@ def my_confusion_matrix(true, pred):
 def make_thresholds(n):
   thresholds = []
   # Creates threshold list from 0/n, 1/n, 2/n, .... to n/n
-  for i in range(n + 1):
+  for i in range(0, n + 1):
     thresholds.append(i/n)
   return thresholds
 
@@ -148,7 +149,7 @@ def validate_model(model, x_test, y_test, threshold, my_functions):
     # Uses my functions if given as an option
     if(my_functions):
         # Generates a List of thresholds that will be used for the ROC calculations
-        thresholds = make_thresholds(1000)
+        thresholds = make_thresholds(10000)
         # Calculates the False Positive Rate (FPR) and True Positive Rate (TPR) of the test case probability predictions using the threshold list above
         tpr, fpr = my_roc_curve(y_test, prediction_proba, thresholds)
         # Gets the True Negative (TN), True Positive (TP), False Negative (FN), False Positive (FP) Values
@@ -158,36 +159,105 @@ def validate_model(model, x_test, y_test, threshold, my_functions):
 
     return fpr, tpr, roc_score, accuracy, sensitivity, specificity, prediction
 
+
+
+def plot_baseline():
+
+    fpr = np.array([0., 0., 0., 0.015625, 0.015625, 0.03125,  0.03125,  0.046875,
+ 0.046875, 0.0625, 0.0625, 0.125, 0.125, 0.171875, 0.171875, 0.1875,
+ 0.1875,  0.203125, 0.203125, 0.234375, 0.234375, 0.25, 0.25, 0.28125,
+ 0.28125,  0.296875, 0.296875, 0.34375,  0.34375,  0.40625,  0.40625,  0.46875,
+ 0.46875,  0.515625, 0.515625, 0.53125,  0.53125,  0.5625,   0.5625,   0.59375,
+ 0.59375,  0.65625,  0.65625,  0.6875,   0.6875,   0.734375, 0.734375, 0.765625,
+ 0.765625, 0.78125,  0.78125,  0.921875, 0.921875, 1.]) # X in the 0 Spike Curves
+    tpr = np.array([0., 0.01639344, 0.14754098, 0.14754098, 0.18032787, 0.18032787,
+ 0.27868852, 0.27868852, 0.32786885, 0.32786885, 0.39344262, 0.39344262,
+ 0.42622951, 0.42622951, 0.47540984, 0.47540984, 0.50819672, 0.50819672,
+ 0.52459016, 0.52459016, 0.54098361, 0.54098361, 0.59016393, 0.59016393,
+ 0.63934426, 0.63934426, 0.68852459, 0.68852459, 0.70491803, 0.70491803,
+ 0.75409836, 0.75409836, 0.7704918,  0.7704918,  0.78688525, 0.78688525,
+ 0.81967213, 0.81967213, 0.83606557, 0.83606557, 0.85245902, 0.85245902,
+ 0.8852459, 0.8852459,  0.90163934, 0.90163934, 0.91803279, 0.91803279,
+ 0.93442623, 0.93442623, 0.96721311, 0.96721311, 1., 1.]) # y in the 0 Spike Curve
+    array = make_thresholds(len(fpr) - 1) # X and Y in the baseline (Array where points are i/len(fpr))
+
+    distance_fpr = []
+    distance_tpr = []
+    for i in range(0, len(fpr)):
+        #d_fpr = np.sqrt(abs(fpr[i] ** 2 - array[i] ** 2)
+        #d_tpr = np.sqrt(abs(tpr[i]**2 - array[i]**2)) # y
+        d_fpr = fpr[i] - array[i] # x1 - x2 Horizontal Distance
+        d_tpr = tpr[i] - array[i] # y1 - y2 Vertical Distance
+        c = np.sqrt(d_fpr ** 2 + d_tpr ** 2) # c = sqrt( (x1 - x2) ^ 2 + (y1 - y2) ^2)
+        deltaxy = np.sqrt((c ** 2) // 2)
+        distance_fpr.append(deltaxy)
+        distance_tpr.append(deltaxy)
+
+    #print(distance_fpr)
+    fpr = fpr - distance_fpr # Xi - Horizontal Distance
+    tpr = tpr - distance_tpr # Yi - Vertical Distance
+    plt.plot(fpr, tpr, color='red') # Plots roc_1
+    plt.plot(array, array, color='darkblue', linestyle='--') # Plots baseline
+    plt.xlabel('False Positive Rate (FPR)')
+    plt.ylabel('True Positive Rate (TPR)')
+    plt.title('baseline')
+    plt.legend()
+    plt.show()
+
+#plot_baseline()
+
+def correction(array):
+  prev_val = 100000
+  for i in range(0, len(array)):
+    if (array[i] < prev_val):
+      prev_val = array[i]
+    else:
+      array[i] = prev_val
+  return array
+
 def plot_roc_curve(fpr_array, tpr_array, roc_score_array, label_array, title, fig_name, roc_subtract):
     colors = ['orange', 'red', 'green', 'purple', 'yellow']
     fpr_array = np.array(fpr_array)
     tpr_array = np.array(tpr_array)
     roc_score_array = np.array(roc_score_array)
     # Iterates through the dataset scenarios (different number of spikes, different number of features, etc)
+    print(fpr_array[0])
+    print(tpr_array[0])
+
     if roc_subtract:
-        for i in range(1, len(tpr_array)):
-            # plots the corresponding FPR and TPR values found for the dataset scenario, substracting spiked 0 curve to the other ones
-            plt.plot(fpr_array[i] - fpr_array[0], tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(roc_score_array[i] - roc_score_array[0], 3)))
+        for i in range(0, len(tpr_array)):
+            # plots the corresponding FPR and TPR values found for the dataset scenario, shifting the difference of the spiked 0 curve to the other ones
+            corrected = correction(fpr_array[i] + (tpr_array[0] - fpr_array[0]))
+            from sklearn.metrics import auc
+            area = auc(tpr_array[i], corrected)
+            plt.plot(corrected, tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(1 - area, 3)))
     else:
         for i in range(0, len(tpr_array)):
             # plots the corresponding FPR and TPR values found for the dataset scenario
             plt.plot(fpr_array[i], tpr_array[i], color=colors[i], label=label_array[i] +', auc=' + str(round(roc_score_array[i], 3)))
+            #plt.plot(fpr_array, tpr_array, color='orange', label='0 Spikes' +', auc=' + str(roc_score_array))
+            #continue
     # (0.5 AUC Score, Random Guess) Line
+    #plt.plot(fpr_array, tpr_array, color='orange', label='0 Spikes' +', auc=' + str(roc_score_array.round(3)))
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
     # Sets graph axis labels, title, legend table
     plt.xlabel('False Positive Rate (FPR)')
     plt.ylabel('True Positive Rate (TPR)')
     plt.title(title)
     plt.legend()
-    plt.show()
     # Saves the graph as a png file
     plt.savefig(fig_name + '.png')
+    plt.show()
     plt.clf()
+    if(roc_subtract):
+        return
+    else:
+        plot_roc_curve(fpr_array, tpr_array, roc_score_array, label_array, title, fig_name, 1)
     return
 
 def plot_roc_curve_random(fpr_array, tpr_array, roc_score_array, title, fig_name):
     colors = ['orange', 'red', 'green', 'purple', 'yellow']
-    plt.plot(fpr_array, tpr_array, color='orange', label= 'Random Dataset, auc=' + str(round(roc_score_array, 3)))
+    plt.plot(fpr_array, tpr_array, color='orange', label= '0 Spikes, auc=' + str(round(roc_score_array, 3)))
     # (0.5 AUC Score, Random Guess) Line
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
     # Sets graph axis labels, title, legend table
